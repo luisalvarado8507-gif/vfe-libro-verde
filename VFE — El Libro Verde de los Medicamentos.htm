@@ -1,11 +1,108 @@
 <!DOCTYPE html>
-<!-- saved from url=(0093)file:///Users/luisalvaradoaguirre/Downloads/VFE_El_Libro_Verde_de_los_Medicamentos%20(10).htm -->
+<!-- saved from url=(0093)file:///Users/luisalvaradoaguirre/Downloads/VFE_El_Libro_Verde_de_los_Medicamentos%20(12).htm -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 64 64&#39;&gt;&lt;rect width=&#39;64&#39; height=&#39;64&#39; rx=&#39;14&#39; fill=&#39;%231A6B08&#39;/&gt;&lt;rect x=&#39;10&#39; y=&#39;22&#39; width=&#39;18&#39; height=&#39;20&#39; rx=&#39;9&#39; fill=&#39;%23ffffff&#39;/&gt;&lt;rect x=&#39;28&#39; y=&#39;22&#39; width=&#39;18&#39; height=&#39;20&#39; rx=&#39;9&#39; fill=&#39;%233DDB18&#39;/&gt;&lt;rect x=&#39;10&#39; y=&#39;31&#39; width=&#39;36&#39; height=&#39;11&#39; fill=&#39;%233DDB18&#39;/&gt;&lt;rect x=&#39;10&#39; y=&#39;22&#39; width=&#39;36&#39; height=&#39;11&#39; fill=&#39;%23ffffff&#39;/&gt;&lt;rect x=&#39;10&#39; y=&#39;22&#39; width=&#39;36&#39; height=&#39;20&#39; rx=&#39;9&#39; fill=&#39;none&#39; stroke=&#39;%23ffffff&#39; stroke-width=&#39;2&#39;/&gt;&lt;text x=&#39;32&#39; y=&#39;54&#39; text-anchor=&#39;middle&#39; font-family=&#39;Arial Black,Arial&#39; font-weight=&#39;900&#39; font-size=&#39;11&#39; fill=&#39;%23ffffff&#39; letter-spacing=&#39;1&#39;&gt;VFE&lt;/text&gt;&lt;/svg&gt;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VFE — El Libro Verde de los Medicamentos</title>
-<link href="file:///Users/luisalvaradoaguirre/Downloads/VFE%20%E2%80%94%20El%20Libro%20Verde%20de%20los%20Medicamentos_files/css2" rel="stylesheet">
+<!-- Firebase SDK — compat version (works without bundler) -->
+<script src="./VFE — El Libro Verde de los Medicamentos_files/firebase-app-compat.js"></script><style type="text/css" id="operaUserStyle"></style>
+<script src="./VFE — El Libro Verde de los Medicamentos_files/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyDWt8EpJcqfTVCo7Dkgxy7YXSYY3bkP6nA",
+    authDomain: "libroverde-c6a2e.firebaseapp.com",
+    projectId: "libroverde-c6a2e",
+    storageBucket: "libroverde-c6a2e.firebasestorage.app",
+    messagingSenderId: "268047320608",
+    appId: "1:268047320608:web:eacf385a8e7747b27f5e45"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const fsdb = firebase.firestore();
+
+  function setOnline(on){
+    const b=document.getElementById('fb-banner');
+    if(!b)return;
+    b.style.background=on?'#1A6B08':'#DC2626';
+    b.textContent=on?'🟢 Conectado · Sincronización en tiempo real activa':'🔴 Sin conexión · Los cambios no se guardarán';
+  }
+
+  async function fbLoad(){
+    try{
+      // Load chaps
+      const chSnap=await fsdb.collection('vfe').doc('chaps').get();
+      if(chSnap.exists) window.chaps=JSON.parse(chSnap.data().json);
+
+      // Load db
+      const dbSnap=await fsdb.collection('vfe').doc('db').get();
+      if(dbSnap.exists) window.db=JSON.parse(dbSnap.data().json);
+
+      // Load stexts
+      const stSnap=await fsdb.collection('vfe').doc('stexts').get();
+      if(stSnap.exists) window.stexts=JSON.parse(stSnap.data().json);
+
+      // Refresh UI
+      if(typeof rChaps==='function') rChaps();
+      if(typeof rDash==='function')  rDash();
+      if(typeof rC2==='function')    rC2();
+
+      setOnline(true);
+
+      // Real-time listeners
+      fsdb.collection('vfe').doc('chaps').onSnapshot(snap=>{
+        if(!snap.exists)return;
+        const inc=JSON.parse(snap.data().json);
+        if(JSON.stringify(inc)!==JSON.stringify(window.chaps)){
+          window.chaps=inc;
+          if(typeof rChaps==='function') rChaps();
+          if(typeof rC2==='function')    rC2();
+        }
+      });
+      fsdb.collection('vfe').doc('db').onSnapshot(snap=>{
+        if(!snap.exists)return;
+        const inc=JSON.parse(snap.data().json);
+        if(JSON.stringify(inc)!==JSON.stringify(window.db)){
+          window.db=inc;
+          if(typeof rDb==='function')   rDb();
+          if(typeof rDash==='function') rDash();
+          if(typeof rC2==='function')   rC2();
+        }
+      });
+      fsdb.collection('vfe').doc('stexts').onSnapshot(snap=>{
+        if(!snap.exists)return;
+        const inc=JSON.parse(snap.data().json);
+        if(JSON.stringify(inc)!==JSON.stringify(window.stexts)){
+          window.stexts=inc;
+          if(typeof showSubView==='function'&&window.aSub) showSubView();
+        }
+      });
+
+    }catch(e){
+      console.error('Firebase load error:',e);
+      setOnline(false);
+    }
+  }
+
+  window.fbSave=async function(){
+    try{
+      await Promise.all([
+        fsdb.collection('vfe').doc('chaps').set({json:JSON.stringify(window.chaps),ts:Date.now()}),
+        fsdb.collection('vfe').doc('db').set({json:JSON.stringify(window.db),ts:Date.now()}),
+        fsdb.collection('vfe').doc('stexts').set({json:JSON.stringify(window.stexts),ts:Date.now()}),
+      ]);
+      setOnline(true);
+    }catch(e){
+      console.error('Firebase save error:',e);
+      setOnline(false);
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', fbLoad);
+})();
+</script>
+<link href="./VFE — El Libro Verde de los Medicamentos_files/css2" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -238,7 +335,11 @@ tr:hover td{background:var(--bg3)}
 <body>
 
 
-<div class="app c2open">
+<!-- Firebase connection banner -->
+<div id="fb-banner" style="position: fixed; top: 0px; left: 0px; right: 0px; z-index: 9999; padding: 5px 14px; font-size: 11px; font-family: monospace; color: rgb(255, 255, 255); text-align: center; letter-spacing: 0.3px; transition: background 0.3s; background: rgb(220, 38, 38);">🔴 Sin conexión · Los cambios no se guardarán</div>
+<div style="height:24px"></div>
+
+<div class="app">
 
 <!-- COL1 -->
 <aside class="col1">
@@ -270,9 +371,9 @@ tr:hover td{background:var(--bg3)}
       <span style="flex:1;line-height:1.3;font-size:12px">Sistema Cardiovascular</span>
       <button class="sb-del" title="Editar capítulo" onclick="event.stopPropagation();editChap(&#39;c01&#39;)" style="color:var(--blue);margin-right:2px">✎</button>
       <button class="sb-del" title="Eliminar capítulo" onclick="event.stopPropagation();delChap(&#39;c01&#39;)">✕</button>
-      <span class="ch-arr o">▶</span>
+      <span class="ch-arr ">▶</span>
     </div>
-    <div class="subs o">
+    <div class="subs ">
       <div>
     <div class="sb " style="padding-left:24px" onclick="selSb(&#39;c01&#39;,&#39;s0101&#39;)">
       <span style="font-size:9px;color:var(--tx4);margin-right:3px;transition:transform .2s;display:inline-block;transform:rotate(0deg);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();togNode(&#39;s0101&#39;)">·</span>
@@ -287,13 +388,13 @@ tr:hover td{background:var(--bg3)}
     </div>
   </div><div>
     <div class="sb " style="padding-left:24px" onclick="selSb(&#39;c01&#39;,&#39;s0102&#39;)">
-      <span style="font-size:9px;color:var(--tx4);margin-right:3px;transition:transform .2s;display:inline-block;transform:rotate(90deg);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();togNode(&#39;s0102&#39;)">▶</span>
+      <span style="font-size:9px;color:var(--tx4);margin-right:3px;transition:transform .2s;display:inline-block;transform:rotate(0deg);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();togNode(&#39;s0102&#39;)">▶</span>
       <span style="font-family:var(--mono);font-size:10px;color:var(--tx4);margin-right:5px;flex-shrink:0;white-space:nowrap">1.2</span>
       <span style="flex:1;line-height:1.4;font-size:11.5px">Hipertensión</span>
       <button class="sb-del" title="Editar nombre" onclick="event.stopPropagation();editSub(&#39;c01&#39;,&#39;s0102&#39;)" style="color:var(--blue);margin-right:1px">✎</button>
       <button class="sb-del" onclick="event.stopPropagation();delSubRec(&#39;c01&#39;,&#39;s0102&#39;)" title="Eliminar">✕</button>
     </div>
-    <div style="display:block">
+    <div style="display:none">
       <div>
     <div class="sb " style="padding-left:38px" onclick="selSb(&#39;c01&#39;,&#39;s1774780590723&#39;)">
       <span style="font-size:9px;color:var(--tx4);margin-right:3px;transition:transform .2s;display:inline-block;transform:rotate(0deg);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();togNode(&#39;s1774780590723&#39;)">·</span>
@@ -307,7 +408,7 @@ tr:hover td{background:var(--bg3)}
       <div class="sb-add" style="padding-left:52px" onclick="addSbTo(&#39;c01&#39;,&#39;s1774780590723&#39;)">＋ Subnivel</div>
     </div>
   </div><div>
-    <div class="sb act" style="padding-left:38px" onclick="selSb(&#39;c01&#39;,&#39;s1774780614948&#39;)">
+    <div class="sb " style="padding-left:38px" onclick="selSb(&#39;c01&#39;,&#39;s1774780614948&#39;)">
       <span style="font-size:9px;color:var(--tx4);margin-right:3px;transition:transform .2s;display:inline-block;transform:rotate(0deg);flex-shrink:0;cursor:pointer" onclick="event.stopPropagation();togNode(&#39;s1774780614948&#39;)">·</span>
       <span style="font-family:var(--mono);font-size:10px;color:var(--tx4);margin-right:5px;flex-shrink:0;white-space:nowrap">1.2.2</span>
       <span style="flex:1;line-height:1.4;font-size:11.5px">Vasodilatadores</span>
@@ -1505,7 +1606,7 @@ tr:hover td{background:var(--bg3)}
     <div class="nb" id="nb-progress" onclick="showV(&#39;progress&#39;)" style="border-color:var(--bdr2)"><span>📊</span>Panel de avances</div>
 
     <div class="nb" id="nb-db" onclick="showV(&#39;db&#39;)"><span>⊞</span>Base de datos</div>
-    <div class="nb act" id="nb-nuevo" onclick="openNuevo()"><span>＋</span>Nuevo medicamento</div>
+    <div class="nb" id="nb-nuevo" onclick="openNuevo()"><span>＋</span>Nuevo medicamento</div>
     <div class="nb" id="nb-io" onclick="showV(&#39;io&#39;)"><span>⇅</span>Importar / Exportar</div>
   </div>
 </aside>
@@ -1513,31 +1614,37 @@ tr:hover td{background:var(--bg3)}
 <!-- COL2 -->
 <section class="col2">
   <div class="c2h">
-    <div class="c2t" id="c2t">1.2.2 Vasodilatadores</div>
-    <div class="c2b" id="c2b">01 › Hipertensión</div>
+    <div class="c2t" id="c2t">Selecciona un capítulo</div>
+    <div class="c2b" id="c2b"></div>
   </div>
-  <div class="c2body" id="c2body"><div style="font-size:10px;font-family:var(--mono);color:var(--tx3);letter-spacing:1px;margin:0 0 6px">1 MEDICAMENTOS</div><div class="mchip" onclick="verMed(&#39;1774781039949&#39;)"><div class="mdot a"></div><div><div class="mchip-n">Nitroprusiato 50 mg, 2 mL (Hospimedikka)</div><div class="mchip-p">Nitroprusiato 50 mg, 2 mL</div></div></div><div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
-    <button class="sadd" style="font-size:11px" onclick="addSbTo(&#39;c01&#39;,&#39;s1774780614948&#39;)">＋ Subnivel</button>
-    <button class="sadd" style="font-size:11px" onclick="editSub(&#39;c01&#39;,&#39;s1774780614948&#39;)">✎ Renombrar</button>
-    <button class="sadd" style="font-size:11px" onclick="addSecM()">＋ Sección clínica</button>
-  </div></div>
+  <div class="c2body" id="c2body">
+    <div class="c2ph">
+      <svg width="40" height="22" viewBox="0 0 52 28" fill="none">
+  <rect x="0" y="0" width="52" height="28" rx="14" fill="var(--bdr)"></rect>
+  <path d="M26 0 Q14 0 7 7 Q0 11 0 14 Q0 17 7 21 Q14 28 26 28 Z" fill="var(--bg2)"></path>
+  <path d="M26 0 Q38 0 45 7 Q52 11 52 14 Q52 17 45 21 Q38 28 26 28 Z" fill="var(--green)" opacity="0.4"></path>
+  <line x1="26" y1="0" x2="26" y2="28" stroke="var(--bdr2)" stroke-width="1.5"></line>
+</svg>
+      <p>Selecciona un capítulo</p>
+    </div>
+  </div>
 </section>
 
 <!-- COL3 -->
 <main class="col3">
   <div class="topbar">
-    <button onclick="showV(&#39;dash&#39;)" title="Ir al inicio" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg3); border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; border-radius: var(--r); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--tx2); font-family: var(--sans); flex-shrink: 0; transition: 0.15s;" onmouseover="this.style.background=&#39;var(--green)&#39;;this.style.color=&#39;#fff&#39;;this.style.borderColor=&#39;var(--green)&#39;" onmouseout="this.style.background=&#39;var(--bg3)&#39;;this.style.color=&#39;var(--tx2)&#39;;this.style.borderColor=&#39;var(--bdr)&#39;">
+    <button onclick="showV(&#39;dash&#39;)" title="Ir al inicio" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:600;color:var(--tx2);font-family:var(--sans);flex-shrink:0;transition:all .15s" onmouseover="this.style.background=&#39;var(--green)&#39;;this.style.color=&#39;#fff&#39;;this.style.borderColor=&#39;var(--green)&#39;" onmouseout="this.style.background=&#39;var(--bg3)&#39;;this.style.color=&#39;var(--tx2)&#39;;this.style.borderColor=&#39;var(--bdr)&#39;">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7L7 1L13 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.5 5.5V12.5H5.5V9H8.5V12.5H11.5V5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       Inicio
     </button>
-    <div class="tbt" id="mtit" style="flex:1">1.2.2 Vasodilatadores</div>
+    <div class="tbt" id="mtit" style="flex:1">Dashboard</div>
     <button class="btn btn-p bsm" onclick="openNuevo()">+ Nuevo</button>
   </div>
 
   <div class="content">
 
     <!-- DASHBOARD -->
-    <div class="view" id="view-dash">
+    <div class="view act" id="view-dash">
       <div id="dstats" style="display:none"></div>
 
       <!-- HEADER ROW -->
@@ -1567,7 +1674,7 @@ tr:hover td{background:var(--bg3)}
         <!-- stat cards -->
         <div id="dash-s-med" style="background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rl);padding:18px 20px;border-left:4px solid var(--green)">
           <div style="font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:1px;margin-bottom:8px">MEDICAMENTOS</div>
-          <div id="ds-med" style="font-size:32px;font-weight:800;color:var(--tx);line-height:1">194</div>
+          <div id="ds-med" style="font-size:32px;font-weight:800;color:var(--tx);line-height:1">193</div>
           <div id="ds-med-sub" style="font-size:11px;color:var(--tx3);margin-top:4px">registros totales</div>
         </div>
         <div id="dash-s-pa" style="background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rl);padding:18px 20px;border-left:4px solid var(--gdp)">
@@ -1577,20 +1684,20 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div id="dash-s-pres" style="background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rl);padding:18px 20px;border-left:4px solid var(--bdr2)">
           <div style="font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:1px;margin-bottom:8px">GENÉRICOS</div>
-          <div id="ds-pres" style="font-size:32px;font-weight:800;color:var(--tx);line-height:1">2</div>
+          <div id="ds-pres" style="font-size:32px;font-weight:800;color:var(--tx);line-height:1">1</div>
           <div id="ds-pres-sub" style="font-size:11px;color:var(--tx3);margin-top:4px">medicamentos genéricos</div>
         </div>
         <!-- accesos rápidos -->
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button onclick="showV(&#39;nuevo&#39;)" style="flex: 1 1 0%; display: flex; align-items: center; gap: 9px; padding: 0px 14px; background: var(--green); color: rgb(255, 255, 255); border: none; border-radius: var(--r); font-family: var(--sans); font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s; min-height: 44px;" onmouseover="this.style.background=&#39;var(--gdp)&#39;" onmouseout="this.style.background=&#39;var(--green)&#39;">
+          <button onclick="showV(&#39;nuevo&#39;)" style="flex:1;display:flex;align-items:center;gap:9px;padding:0 14px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;min-height:44px" onmouseover="this.style.background=&#39;var(--gdp)&#39;" onmouseout="this.style.background=&#39;var(--green)&#39;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M1 7H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
             Nuevo medicamento
           </button>
-          <button onclick="showV(&#39;db&#39;)" style="flex: 1 1 0%; display: flex; align-items: center; gap: 9px; padding: 0px 14px; background: var(--bg2); color: var(--tx2); border: 1.5px solid var(--bdr); border-radius: var(--r); font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; min-height: 44px;" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;var(--bg2)&#39;">
+          <button onclick="showV(&#39;db&#39;)" style="flex:1;display:flex;align-items:center;gap:9px;padding:0 14px;background:var(--bg2);color:var(--tx2);border:1.5px solid var(--bdr);border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;min-height:44px" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;var(--bg2)&#39;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.6"></rect><path d="M1 6H13" stroke="currentColor" stroke-width="1.6"></path></svg>
             Base de datos
           </button>
-          <button onclick="showV(&#39;io&#39;)" style="flex: 1 1 0%; display: flex; align-items: center; gap: 9px; padding: 0px 14px; background: var(--bg2); color: var(--tx2); border: 1.5px solid var(--bdr); border-radius: var(--r); font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; min-height: 44px;" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;var(--bg2)&#39;">
+          <button onclick="showV(&#39;io&#39;)" style="flex:1;display:flex;align-items:center;gap:9px;padding:0 14px;background:var(--bg2);color:var(--tx2);border:1.5px solid var(--bdr);border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;min-height:44px" onmouseover="this.style.background=&#39;var(--bg3)&#39;" onmouseout="this.style.background=&#39;var(--bg2)&#39;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 9V1M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1 11H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
             Importar / Exportar
           </button>
@@ -1656,7 +1763,7 @@ tr:hover td{background:var(--bg3)}
         <button class="btn btn-g bsm" style="margin-left:auto" onclick="clearF()">✕ Limpiar</button>
       </div>
       <div class="tw">
-        <div class="th2"><span class="th2t" id="dbtit">Medicamentos</span><span class="th2c" id="dbcnt">1 registro</span></div>
+        <div class="th2"><span class="th2t" id="dbtit">Medicamentos</span><span class="th2c" id="dbcnt">0</span></div>
         <table><thead><tr>
           <th onclick="srt(&#39;vtm&#39;)">VTM / DCI ↕</th>
           <th onclick="srt(&#39;amp&#39;)">AMP (Comercial) ↕</th>
@@ -1664,19 +1771,7 @@ tr:hover td{background:var(--bg3)}
           <th onclick="srt(&#39;vmp&#39;)">VMP ↕</th>
           <th onclick="srt(&#39;estado&#39;)">ESTADO ↕</th>
           <th>GENÉRICO</th><th>ACCIONES</th>
-        </tr></thead><tbody id="dbtbody"><tr>
-    <td class="tdn">Nitroprusiato</td>
-    <td style="cursor:pointer" onclick="verMed(&#39;1774781039949&#39;)">Nitroprusiato 50 mg, 2 mL (Hospimedikka) <small style="color:var(--tx3)">50 mg, 2 mL</small></td>
-    <td class="tdl">Hospimedikka</td>
-    <td class="tdm">Nitroprusiato 50 mg, 2 mL Solución inyectable</td>
-    <td><span class="badge bg">autorizado</span></td>
-    <td><span class="badge bg">Sí</span></td>
-    <td><div class="racts">
-      <button class="rb ve" onclick="verMed(&#39;1774781039949&#39;)">Ver</button>
-      <button class="rb" onclick="exportMedPDF(&#39;1774781039949&#39;)" title="Exportar ficha PDF" style="color:var(--gdp);border-color:var(--bdr2)">PDF</button>
-      <button class="rb ed" onclick="editMed(&#39;1774781039949&#39;)">Editar</button>
-      <button class="rb de" onclick="delMed(&#39;1774781039949&#39;)">✕</button>
-    </div></td></tr></tbody></table>
+        </tr></thead><tbody id="dbtbody"></tbody></table>
       </div>
       <div id="pgn"></div>
     </div>
@@ -1718,19 +1813,19 @@ tr:hover td{background:var(--bg3)}
           <div class="fg full">
             <label class="flbl">VÍA DE ADMINISTRACIÓN <span class="req">*</span></label>
             <div id="f-via-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:9px 10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:var(--r);transition:border-color .15s" onclick="this.style.borderColor=&#39;var(--green)&#39;">
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-oral"><input type="checkbox" value="oral" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Oral</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--green); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; background: var(--green); transition: 0.12s; color: rgb(255, 255, 255);" id="vl-iv"><input type="checkbox" value="intravenosa" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Intravenosa (IV)</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-im"><input type="checkbox" value="intramuscular" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Intramuscular (IM)</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-sc"><input type="checkbox" value="subcutánea" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Subcutánea (SC)</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-top"><input type="checkbox" value="tópica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Tópica</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-inh"><input type="checkbox" value="inhalatoria" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Inhalatoria</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-oft"><input type="checkbox" value="oftálmica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Oftálmica</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-ot"><input type="checkbox" value="ótica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Ótica</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-nas"><input type="checkbox" value="nasal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Nasal</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-rec"><input type="checkbox" value="rectal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Rectal</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-vag"><input type="checkbox" value="vaginal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Vaginal</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-trd"><input type="checkbox" value="transdérmica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Transdérmica</label>
-              <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; cursor: pointer; padding: 3px 8px; border-radius: 20px; border-color: var(--bdr); border-top-style: ; border-top-width: ; border-right-style: ; border-right-width: ; border-bottom-style: ; border-bottom-width: ; border-left-style: ; border-left-width: ; border-image-source: ; border-image-slice: ; border-image-width: ; border-image-outset: ; border-image-repeat: ; transition: 0.12s;" id="vl-sbl"><input type="checkbox" value="sublingual" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Sublingual</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-oral"><input type="checkbox" value="oral" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Oral</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-iv"><input type="checkbox" value="intravenosa" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Intravenosa (IV)</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-im"><input type="checkbox" value="intramuscular" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Intramuscular (IM)</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-sc"><input type="checkbox" value="subcutánea" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Subcutánea (SC)</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-top"><input type="checkbox" value="tópica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Tópica</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-inh"><input type="checkbox" value="inhalatoria" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Inhalatoria</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-oft"><input type="checkbox" value="oftálmica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Oftálmica</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-ot"><input type="checkbox" value="ótica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Ótica</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-nas"><input type="checkbox" value="nasal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Nasal</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-rec"><input type="checkbox" value="rectal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Rectal</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-vag"><input type="checkbox" value="vaginal" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Vaginal</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-trd"><input type="checkbox" value="transdérmica" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Transdérmica</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg2);transition:all .12s" id="vl-sbl"><input type="checkbox" value="sublingual" class="via-cb" style="accent-color:var(--green);width:13px;height:13px" onchange="viaChanged()"> Sublingual</label>
             </div>
             <span style="font-size:10px;color:var(--tx3);margin-top:2px">Puedes seleccionar una o más vías</span>
           </div>
@@ -1762,25 +1857,25 @@ tr:hover td{background:var(--bg3)}
           <div class="auto-grid">
             <div class="auto-field">
               <div class="auto-lbl">VTM — Entidad Terapéutica Virtual</div>
-              <div class="auto-val" id="av-vtm">Nitroprusiato</div>
+              <div class="auto-val" id="av-vtm"><span class="emp">Ingresa el principio activo</span></div>
             </div>
             <div class="auto-field">
               <div class="auto-lbl">VMP — Producto Medicinal Virtual</div>
-              <div class="auto-val" id="av-vmp">Nitroprusiato 50 mg, 2 mL Solución inyectable</div>
+              <div class="auto-val" id="av-vmp"><span class="emp">PA + FF + Concentración</span></div>
             </div>
             <div class="auto-field">
               <div class="auto-lbl">AMP — Producto Medicinal Real</div>
-              <div class="auto-val" id="av-amp">Nitroprusiato 50 mg, 2 mL (Hospimedikka)</div>
+              <div class="auto-val" id="av-amp"><span class="emp">VMP + Laboratorio</span></div>
             </div>
           </div>
           <div style="margin-top:8px">
             <div class="auto-field" style="margin-bottom:6px">
               <div class="auto-lbl">VMPP — Paquete Virtual (requiere unidades)</div>
-              <div class="auto-val" id="av-vmpp">Nitroprusiato 50 mg, 2 mL Solución inyectable 1 vial</div>
+              <div class="auto-val" id="av-vmpp"><span class="emp">VMP + Unidades de presentación</span></div>
             </div>
             <div class="auto-field">
               <div class="auto-lbl">AMPP — Paquete Real</div>
-              <div class="auto-val" id="av-ampp">Nitroprusiato 50 mg, 2 mL (Hospimedikka) 1 vial</div>
+              <div class="auto-val" id="av-ampp"><span class="emp">AMP + Unidades de presentación</span></div>
             </div>
           </div>
         </div>
@@ -1827,7 +1922,7 @@ tr:hover td{background:var(--bg3)}
               <div style="font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:1px">PRECIOS POR FARMACIA (USD)</div>
               <div style="font-size:11px;color:var(--tx4);margin-top:2px">Precio de la presentación completa · Farmaprecios solo como referencia, no entra en el cálculo</div>
             </div>
-            <div style="font-size:11px;color:var(--tx3);font-family:var(--mono);text-align:right" id="precio-prom-lbl">Mediana de <b>3</b> fuentes<br><span style="font-size:10px;opacity:.7">Farmaprecios excluido del cálculo</span></div>
+            <div style="font-size:11px;color:var(--tx3);font-family:var(--mono);text-align:right" id="precio-prom-lbl"></div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="farm-grid">
             <!-- Farmaprecios — solo referencia, NO entra en mediana -->
@@ -1906,10 +2001,10 @@ tr:hover td{background:var(--bg3)}
         </div>
 
         <div class="fsec">Clasificación — Capítulo y subcapítulos</div>
-        <div id="class-chain" style="display:flex;flex-direction:column;gap:10px"><div class="fgrid" style="grid-template-columns: 1fr;"><div class="fg"><label class="flbl">CAPÍTULO <span class="req">*</span></label><select class="fsel" id="cc-chap"><option value="">— Selecciona un capítulo —</option><option value="c01">1 Sistema Cardiovascular</option><option value="c02">2 Sangre y Coagulación</option><option value="c03">3 Sistema Gastrointestinal</option><option value="c04">4 Sistema Respiratorio</option><option value="c05">5 Dolor y Fiebre</option><option value="c06">6 Patología Osteoarticular</option><option value="c07">7 Sistema Hormonal</option><option value="c08">8 Ginecología y Obstetricia</option><option value="c09">9 Sistema Urogenital</option><option value="c10">10 Sistema Nervioso</option><option value="c11">11 Infecciones</option><option value="c12">12 Inmunidad</option><option value="c13">13 Dermatología</option><option value="c14">14 Oftalmología</option><option value="c15">15 Otorrinolaringología</option><option value="c16">16 Anestésicos</option><option value="c17">17 Antídotos y Quelantes</option><option value="c18">18 Medicamentos Diversos</option></select></div></div><div class="fg sub-level-row"><label class="flbl">Subcapítulo</label><select class="fsel" data-level="1"><option value="">— Selecciona subcapítulo —</option><option value="s0101">1.1 Evaluación y manejo del riesgo cardiovascular</option><option value="s0102">1.2 Hipertensión</option><option value="s0103">1.3 Insuficiencia cardíaca</option><option value="s0104">1.4 Hipolipemiantes</option><option value="s0105">1.5 Vasodilatadores</option></select></div><div class="fg sub-level-row"><label class="flbl">Subnivel 2</label><select class="fsel" data-level="2"><option value="">— Selecciona subnivel 2 —</option><option value="s1774780590723">Bloqueadores alfa adrenérgicos</option><option value="s1774780614948">Vasodilatadores</option></select></div></div>
+        <div id="class-chain" style="display:flex;flex-direction:column;gap:10px"></div>
 
         <div class="fsec">Secciones clínicas <span class="fsec-badge">SELECCIONA LAS QUE APLICAN</span></div>
-        <div class="ctw" id="ctogs"><button class="ct " onclick="togCS(&#39;Generalidades&#39;,this)">Generalidades</button><button class="ct " onclick="togCS(&#39;Rol del medicamento&#39;,this)">Rol del medicamento</button><button class="ct " onclick="togCS(&#39;Embarazo y lactancia&#39;,this)">Embarazo y lactancia</button><button class="ct " onclick="togCS(&#39;Interacciones&#39;,this)">Interacciones</button><button class="ct " onclick="togCS(&#39;Precauciones&#39;,this)">Precauciones</button><button class="ct " onclick="togCS(&#39;Indicaciones&#39;,this)">Indicaciones</button><button class="ct " onclick="togCS(&#39;Contraindicaciones&#39;,this)">Contraindicaciones</button><button class="ct " onclick="togCS(&#39;Efectos adversos&#39;,this)">Efectos adversos</button><button class="ct " onclick="togCS(&#39;Dosificación&#39;,this)">Dosificación</button><button class="ct " onclick="togCS(&#39;Farmacocinética&#39;,this)">Farmacocinética</button></div>
+        <div class="ctw" id="ctogs"></div>
         <div id="cfields"></div>
 
         <div style="display:flex;gap:9px;margin-top:18px">
@@ -1920,29 +2015,7 @@ tr:hover td{background:var(--bg3)}
     </div>
 
     <!-- DETALLE -->
-    <div class="view act" id="view-med"><div id="medcontent">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-      <div>
-        <div style="font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:1px;margin-bottom:3px">01 · Sistema Cardiovascular</div>
-        <div style="font-size:18px;font-weight:800;color:var(--tx)">1.2.2 Vasodilatadores</div>
-      </div>
-      <button class="btn btn-g bsm" onclick="addSecM()">＋ Sección clínica</button>
-    </div>
-    <div id="clin-sections"><div style="background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--rl);padding:16px 18px;color:var(--tx4);font-size:13px">
-      Sin secciones clínicas. <span style="color:var(--gdp);cursor:pointer;font-weight:600" onclick="addSecM()">＋ Añadir sección</span>
-    </div></div>
-    <div class="tw" style="margin-top:18px"><div class="th2"><span class="th2t">Medicamentos (1)</span><button class="btn btn-g bsm" onclick="showV(&#39;db&#39;)">Ver todos →</button></div>
-    <table><thead><tr><th>Nombre comercial</th><th>Principio activo</th><th>Concentración</th><th>Laboratorio</th><th></th></tr></thead>
-    <tbody><tr>
-      <td class="tdn" onclick="verMed(&#39;1774781039949&#39;)" style="cursor:pointer">Nitroprusiato 50 mg, 2 mL (Hospimedikka)</td>
-      <td>Nitroprusiato</td><td>50 mg, 2 mL</td><td class="tdl">Hospimedikka</td>
-      <td><div class="racts">
-        <button class="rb ve" onclick="verMed(&#39;1774781039949&#39;)">Ver</button>
-        <button class="rb ed" onclick="editMed(&#39;1774781039949&#39;)">Editar</button>
-        <button class="rb de" onclick="delMed(&#39;1774781039949&#39;);showSubView()">✕</button>
-      </div></td>
-    </tr></tbody></table></div>
-  </div></div>
+    <div class="view" id="view-med"><div id="medcontent"></div></div>
 
     <!-- IO -->
     <div class="view" id="view-io">
@@ -2050,9 +2123,9 @@ tr:hover td{background:var(--bg3)}
 </div>
 
 <!-- NOTIF -->
-<div class="notif" id="notif"><div class="ndot r" id="ndot"></div><span id="nmsg">Eliminado</span></div>
+<div class="notif" id="notif"><div class="ndot g" id="ndot"></div><span id="nmsg"></span></div>
 
-<script src="file:///Users/luisalvaradoaguirre/Downloads/VFE%20%E2%80%94%20El%20Libro%20Verde%20de%20los%20Medicamentos_files/xlsx.full.min.js"></script>
+<script src="./VFE — El Libro Verde de los Medicamentos_files/xlsx.full.min.js"></script>
 <script>
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -2096,9 +2169,15 @@ const DEMO=[
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
+// State — also exposed on window so Firebase module can update them
 let chaps=JSON.parse(localStorage.getItem('vfe4_chaps')||'null')||JSON.parse(JSON.stringify(CHAPS));
 let db=JSON.parse(localStorage.getItem('vfe4_db')||'[]');
 let stexts=JSON.parse(localStorage.getItem('vfe4_stx')||'{}');
+// Mirror to window so Firebase module script can read/write
+Object.defineProperty(window,'chaps',{get:()=>chaps,set:v=>{chaps=v;},configurable:true});
+Object.defineProperty(window,'db',   {get:()=>db,   set:v=>{db=v;},   configurable:true});
+Object.defineProperty(window,'stexts',{get:()=>stexts,set:v=>{stexts=v;},configurable:true});
+Object.defineProperty(window,'aSub', {get:()=>aSub, set:v=>{aSub=v;}, configurable:true});
 let aChap=null,aSub=null,curV='dash',editId=null;
 let fE='',fG='';
 let sk='vtm',sd=1,pg=1;
@@ -2108,9 +2187,12 @@ let modCb=null;
 let srchIdx=-1;
 
 function save(){
+  // Keep localStorage as offline backup
   localStorage.setItem('vfe4_chaps',JSON.stringify(chaps));
   localStorage.setItem('vfe4_db',JSON.stringify(db));
   localStorage.setItem('vfe4_stx',JSON.stringify(stexts));
+  // Save to Firebase (shared, real-time)
+  if(typeof window.fbSave==='function') window.fbSave();
 }
 // ═══════════════════════════════════════════
 // BUSCADOR PREDICTIVO
